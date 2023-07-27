@@ -13,6 +13,7 @@ cd stable-diffusion-xl-video
 
 ### Python Requirements
 ```bash
+pip install deepspeed
 pip install -r requirements.txt
 ```
 
