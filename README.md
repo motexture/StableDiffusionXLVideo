@@ -12,17 +12,30 @@ cd stable-diffusion-xl-video
 ```
 
 ### Python Requirements
+
 ```bash
 pip install deepspeed
 pip install -r requirements.txt
 ```
+
+On some systems, deepspeed requires installing the CUDA toolkit first in order to properly install. If you do not have CUDA toolkit, or deepspeed shows an error follow the instructions by NVIDIA: https://developer.nvidia.com/cuda-downloads
+
+or on linux systems:
+```bash
+sudo apt install build-essential
+wget https://developer.download.nvidia.com/compute/cuda/12.2.0/local_installers/cuda_12.2.0_535.54.03_linux.run
+sudo sh cuda_12.2.0_535.54.03_linux.run
+```
+
+During the installation you only need to install toolkit, not the drivers or documentation.
+
 
 ## Preparing the config file
 Open the training.yaml file and modify the parameters according to your needs.
 
 ## Train
 ```python
-deepspeed train.py --config traning.yaml
+deepspeed train.py --config training.yaml
 ```
 ---
 
