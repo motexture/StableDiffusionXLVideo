@@ -1,0 +1,12 @@
+decord==0.6.0
+diffusers==0.18.2
+einops==0.6.1
+numpy==1.23.5
+omegaconf==2.2.3
+opencv_contrib_python==4.7.0.72
+opencv_python==4.7.0.72
+opencv_python_headless==4.7.0.72
+torch==2.0.0+cu118
+torchvision==0.15.1+cu118
+tqdm==4.65.0
+xformers==0.0.20

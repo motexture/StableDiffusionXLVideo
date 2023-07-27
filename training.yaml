@@ -1,0 +1,83 @@
+# Pretrained 2d diffusers model path.
+pretrained_2d_model_path: "/home/polyware/stable-diffusion-xl-base-1.0"
+
+# Pretrained 3d diffusers model path.
+pretrained_3d_model_path: "sdxlvid"
+
+# Leave it at true if you want to train from scracth
+train_2d_model: True
+
+# The folder where your training outputs will be placed.
+output_dir: "outputs/sdxlvid"
+
+# Adds offset noise to training. See https://www.crosslabs.org/blog/diffusion-with-offset-noise
+offset_noise_strength: 0.1
+use_offset_noise: False
+
+# Training data parameters
+train_data:
+  # The width and height in which you want your training data to be resized to.
+  width: 256      
+  height: 256
+
+  # This will find the closest aspect ratio to your input width and height. 
+  # For example, 512x512 width and height with a video of resolution 1280x720 will be resized to 512x256
+  use_bucketing: True
+
+  # How many frames to step when sampling from the video  
+  frame_step: 4
+
+  # The number of frames to sample. The higher this number, the higher the VRAM (acts similar to batch size).
+  n_sample_frames: 16
+  
+  # Folder containing all videos (prompt should be the file name, _ are automatically replaced to space characters)
+  path: "/media/polyware/56558d16-0640-4aa1-94e8-160568f18306/webvid/data" 
+
+  # Path to the deepspeed config file
+  deepspeed_config_file: "deepspeed/stage-2.json"
+
+# Validation data parameters.
+validation_data:
+  # A custom prompt that is different from your training dataset. 
+  prompt: ""
+
+  # Whether or not to sample preview during training (Requires more VRAM).
+  sample_preview: True
+
+  # The number of frames to sample during validation.
+  num_frames: 16
+
+  # Height and width of validation sample.
+  width: 256
+  height: 256
+
+  # Fps rate for the sample video
+  fps: 8
+
+  # Number of inference steps when generating the video.
+  num_inference_steps: 20
+
+  # CFG scale
+  guidance_scale: 12
+
+# How many epochs to train for
+epochs: 1
+
+# Saves a model every nth step.
+checkpointing_steps: 20
+
+# How many steps to do for validation if sample_preview is enabled.
+validation_steps: 20
+
+# Seed for training.
+seed: 42
+
+# Trades VRAM usage for speed. You lose roughly 20% of training speed, but save a lot of VRAM.
+# If you need to save more VRAM, it can also be enabled for the text encoder, but reduces speed x2.
+gradient_checkpointing: True
+
+# Xformers must be installed for best memory savings and performance (< Pytorch 2.0)
+enable_xformers_memory_efficient_attention: False
+
+# Use scaled dot product attention (Only available with >= Torch 2.0)
+enable_torch_2_attn: True
