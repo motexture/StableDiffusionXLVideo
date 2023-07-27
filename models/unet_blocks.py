@@ -127,7 +127,7 @@ class UNetMidBlock3DCrossAttn(nn.Module):
         resnet_pre_norm: bool = True,
         attention_head_dim: int = 64,
         output_scale_factor: float = 1.0,
-        cross_attention_dim: int = 1024,
+        cross_attention_dim: int = 2048,
         upcast_attention: bool = False
     ):
         super().__init__()
