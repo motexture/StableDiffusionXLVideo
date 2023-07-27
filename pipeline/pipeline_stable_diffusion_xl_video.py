@@ -43,7 +43,7 @@ EXAMPLE_DOC_STRING = """
 """
 
 @dataclass
-class StableDiffusionXLPipelineOutput(BaseOutput):
+class StableDiffusionXLVideoPipelineOutput(BaseOutput):
     """
     Output class for text to video pipelines.
 
@@ -681,7 +681,7 @@ class StableDiffusionXLVideoPipeline(DiffusionPipeline, TextualInversionLoaderMi
                         callback(i, t, latents)
 
         if output_type == "latent":
-            return StableDiffusionXLPipelineOutput(frames=latents)
+            return StableDiffusionXLVideoPipelineOutput(frames=latents)
 
         video_tensor = self.decode_latents(latents)
 
@@ -697,4 +697,4 @@ class StableDiffusionXLVideoPipeline(DiffusionPipeline, TextualInversionLoaderMi
         if not return_dict:
             return (video,)
 
-        return StableDiffusionXLPipelineOutput(frames=video)
+        return StableDiffusionXLVideoPipelineOutput(frames=video)
