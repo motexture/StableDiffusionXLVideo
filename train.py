@@ -226,35 +226,7 @@ def save_pipe(
 
     torch.cuda.empty_cache()
     gc.collect()
-
-def save_unet(global_step, unet, output_dir, is_checkpoint=False):
-    save_path = output_dir
-    
-    if is_checkpoint:
-        save_path = os.path.join(output_dir, f"checkpoint-{global_step}")
-        os.makedirs(save_path, exist_ok=True)
-
-        torch.save(unet.state_dict(), os.path.join(save_path, 'diffusion_pytorch_model.bin'))
-
-        existing_checkpoints = [d for d in os.listdir(output_dir) if 'checkpoint-' in d]
-        existing_checkpoints = sorted(existing_checkpoints, key=lambda d: os.path.getmtime(os.path.join(output_dir, d)))
-
-        # We keep only the last 3 checkpoints
-        while len(existing_checkpoints) > 3:
-            shutil.rmtree(os.path.join(output_dir, existing_checkpoints.pop(0)))
-    else:
-        torch.save(unet.state_dict(), os.path.join(save_path, 'diffusion_pytorch_model.bin'))
-
-    logging.info(f"Saved unet at {save_path} on step {global_step}")
-
-    torch.cuda.empty_cache()
-    gc.collect()
-
-def replace_prompt(prompt, token, wlist):
-    for w in wlist:
-        if w in prompt: return prompt.replace(w, token)
-    return prompt 
-
+        
 def main(
     pretrained_2d_model_path: str,
     pretrained_3d_model_path: str,
