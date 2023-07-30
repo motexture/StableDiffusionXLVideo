@@ -18,8 +18,6 @@ class Pseudo3DConv(nn.Module):
         super().__init__()
 
         self.spatial_conv = nn.Conv2d(dim, dim_out, kernel_size, **kwargs)
-
-        self.temporal_conv = nn.Conv1d(dim_out, dim_out, kernel_size, padding=kernel_size // 2)
         self.temporal_conv = nn.Conv1d(dim_out, dim_out, 3, padding=1)
 
         nn.init.dirac_(self.temporal_conv.weight.data)
@@ -27,32 +25,32 @@ class Pseudo3DConv(nn.Module):
 
     def forward(
         self,
-        x,
+        hidden_states,
         convolve_across_time = True
     ):
-        b, c, *_, h, w = x.shape
+        b, c, *_, h, w = hidden_states.shape
 
-        is_video = x.ndim == 5
+        is_video = hidden_states.ndim == 5
         convolve_across_time &= is_video
 
         if is_video:
-            x = rearrange(x, 'b c f h w -> (b f) c h w')
+            hidden_states = rearrange(hidden_states, 'b c f h w -> (b f) c h w')
 
-        x = self.spatial_conv(x)
+        hidden_states = self.spatial_conv(hidden_states)
 
         if is_video:
-            x = rearrange(x, '(b f) c h w -> b c f h w', b = b)
-            b, c, *_, h, w = x.shape
+            hidden_states = rearrange(hidden_states, '(b f) c h w -> b c f h w', b=b)
+            b, c, *_, h, w = hidden_states.shape
         
         if not convolve_across_time:
-            return x
+            return hidden_states
 
         if is_video:
-            x = rearrange(x, 'b c f h w -> (b h w) c f')
-            x = self.temporal_conv(x)
-            x = rearrange(x, '(b h w) c f -> b c f h w', h = h, w = w)
+            hidden_states = rearrange(hidden_states, 'b c f h w -> (b h w) c f')
+            hidden_states = self.temporal_conv(hidden_states)
+            hidden_states = rearrange(hidden_states, '(b h w) c f -> b c f h w', h=h, w=w)
             
-        return x
+        return hidden_states
 
 class Upsample(nn.Module):
     def __init__(self, channels, use_conv=False, use_conv_transpose=False, out_channels=None, name="conv"):
