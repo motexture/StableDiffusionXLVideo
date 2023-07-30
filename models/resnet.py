@@ -53,7 +53,13 @@ class Pseudo3DConv(nn.Module):
         return hidden_states
 
 class Upsample(nn.Module):
-    def __init__(self, channels, use_conv=False, use_conv_transpose=False, out_channels=None, name="conv"):
+    def __init__(self, 
+                 channels, 
+                 use_conv=False, 
+                 use_conv_transpose=False, 
+                 out_channels=None, 
+                 name="conv"
+                 ):
         super().__init__()
 
         self.channels = channels
@@ -73,7 +79,10 @@ class Upsample(nn.Module):
         else:
             self.Conv2d_0 = conv
 
-    def forward(self, hidden_states, output_size=None):
+    def forward(self, 
+                hidden_states, 
+                output_size=None
+                ):
         assert hidden_states.shape[1] == self.channels
 
         if self.use_conv_transpose:
@@ -103,7 +112,13 @@ class Upsample(nn.Module):
         return hidden_states
 
 class Downsample(nn.Module):
-    def __init__(self, channels, use_conv=False, out_channels=None, padding=1, name="conv"):
+    def __init__(self, 
+                 channels, 
+                 use_conv=False, 
+                 out_channels=None, 
+                 padding=1, 
+                 name="conv"
+                 ):
         super().__init__()
 
         self.channels = channels
@@ -126,7 +141,9 @@ class Downsample(nn.Module):
         else:
             self.conv = conv
 
-    def forward(self, hidden_states):
+    def forward(self, 
+                hidden_states
+                ):
         assert hidden_states.shape[1] == self.channels
         if self.use_conv and self.padding == 0:
             raise NotImplementedError
@@ -200,7 +217,10 @@ class ResnetBlock(nn.Module):
         if self.use_in_shortcut:
             self.conv_shortcut = Pseudo3DConv(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
 
-    def forward(self, input_tensor, temb):
+    def forward(self, 
+                input_tensor, 
+                temb
+                ):
         hidden_states = input_tensor
 
         hidden_states = self.norm1(hidden_states)
@@ -233,5 +253,7 @@ class ResnetBlock(nn.Module):
         return output_tensor
 
 class Mish(torch.nn.Module):
-    def forward(self, hidden_states):
+    def forward(self, 
+                hidden_states
+                ):
         return hidden_states * torch.tanh(torch.nn.functional.softplus(hidden_states))
