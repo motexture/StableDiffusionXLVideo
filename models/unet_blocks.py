@@ -3,7 +3,7 @@
 import torch
 from torch import nn
 from models.resnet import Downsample, ResnetBlock, Upsample
-from models.transformers import SpatialTransformer, TemporalTransformer, SpatioTemporalTransformer
+from models.transformers import SpatialTransformer, TemporalTransformer
 
 def get_down_block(
     down_block_type,
@@ -57,7 +57,6 @@ def get_down_block(
             resnet_time_scale_shift=resnet_time_scale_shift,
         )
     raise ValueError(f"{down_block_type} does not exist.")
-
 
 def get_up_block(
     up_block_type,
@@ -127,7 +126,7 @@ class UNetMidBlock3DCrossAttn(nn.Module):
         resnet_pre_norm: bool = True,
         attention_head_dim: int = 64,
         output_scale_factor: float = 1.0,
-        cross_attention_dim: int = 2048,
+        cross_attention_dim: int = 1024,
         upcast_attention: bool = False
     ):
         super().__init__()
@@ -153,7 +152,6 @@ class UNetMidBlock3DCrossAttn(nn.Module):
         ]
         
         attentions = []
-        spatio_temp_attentions = []
         temp_attentions = []
 
         for _ in range(num_layers):
@@ -166,16 +164,6 @@ class UNetMidBlock3DCrossAttn(nn.Module):
                     cross_attention_dim=cross_attention_dim,
                     norm_num_groups=resnet_groups,
                     upcast_attention=upcast_attention
-                )
-            )
-            spatio_temp_attentions.append(
-                SpatioTemporalTransformer(
-                    in_channels // attention_head_dim,
-                    attention_head_dim,
-                    in_channels=in_channels,
-                    num_layers=transformer_layers,
-                    cross_attention_dim=cross_attention_dim,
-                    norm_num_groups=resnet_groups
                 )
             )
             temp_attentions.append(
@@ -205,7 +193,6 @@ class UNetMidBlock3DCrossAttn(nn.Module):
 
         self.resnets = nn.ModuleList(resnets)
         self.attentions = nn.ModuleList(attentions)
-        self.spatio_temp_attentions = nn.ModuleList(spatio_temp_attentions)
         self.temp_attentions = nn.ModuleList(temp_attentions)
         
     def forward(
@@ -225,7 +212,7 @@ class UNetMidBlock3DCrossAttn(nn.Module):
         else:
             hidden_states = self.resnets[0](hidden_states, temb)
             
-        for attn, spatio_temp_attn, temp_attn, resnet in zip(self.attentions, self.spatio_temp_attentions, self.temp_attentions, self.resnets[1:]):
+        for attn, temp_attn, resnet in zip(self.attentions, self.temp_attentions, self.resnets[1:]):
             if self.gradient_checkpointing:
                 def create_custom_forward(module, return_dict=None):
                     def custom_forward(*inputs):
@@ -237,12 +224,10 @@ class UNetMidBlock3DCrossAttn(nn.Module):
                     return custom_forward
                 
                 hidden_states = torch.utils.checkpoint.checkpoint(create_custom_forward(attn, return_dict=False), hidden_states, encoder_hidden_states,)[0]
-                hidden_states = torch.utils.checkpoint.checkpoint(create_custom_forward(spatio_temp_attn, return_dict=False), hidden_states)[0]
                 hidden_states = torch.utils.checkpoint.checkpoint(create_custom_forward(temp_attn, return_dict=False), hidden_states)[0]
                 hidden_states = torch.utils.checkpoint.checkpoint(create_custom_forward(resnet), hidden_states, temb)
             else:
                 hidden_states = attn(hidden_states, encoder_hidden_states=encoder_hidden_states).sample
-                hidden_states = spatio_temp_attn(hidden_states).sample
                 hidden_states = temp_attn(hidden_states).sample
                 hidden_states = resnet(hidden_states, temb)
 
