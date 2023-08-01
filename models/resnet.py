@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from einops import rearrange
-
+    
 class SuperConvs(nn.Module):
     def __init__(
         self,
@@ -61,52 +61,7 @@ class TemporalConvs(nn.Module):
         hidden_states = identity + hidden_states
 
         return hidden_states
-        
-class Pseudo3DConv(nn.Module):
-    def __init__(
-        self,
-        dim,
-        dim_out,
-        kernel_size,
-        **kwargs
-    ):
-        super().__init__()
-
-        self.spatial_conv = nn.Conv2d(dim, dim_out, kernel_size, **kwargs)
-        self.temporal_conv = nn.Conv1d(dim_out, dim_out, 3, padding=1)
-
-        nn.init.dirac_(self.temporal_conv.weight.data)
-        nn.init.zeros_(self.temporal_conv.bias.data)
-
-    def forward(
-        self,
-        hidden_states,
-        convolve_across_time = True
-    ):
-        b, c, *_, h, w = hidden_states.shape
-
-        is_video = hidden_states.ndim == 5
-        convolve_across_time &= is_video
-
-        if is_video:
-            hidden_states = rearrange(hidden_states, 'b c f h w -> (b f) c h w')
-
-        hidden_states = self.spatial_conv(hidden_states)
-
-        if is_video:
-            hidden_states = rearrange(hidden_states, '(b f) c h w -> b c f h w', b=b)
-            b, c, *_, h, w = hidden_states.shape
-        
-        if not convolve_across_time:
-            return hidden_states
-
-        if is_video:
-            hidden_states = rearrange(hidden_states, 'b c f h w -> (b h w) c f')
-            hidden_states = self.temporal_conv(hidden_states)
-            hidden_states = rearrange(hidden_states, '(b h w) c f -> b c f h w', h=h, w=w)
-            
-        return hidden_states
-
+    
 class Upsample(nn.Module):
     def __init__(self, 
                  channels, 
@@ -127,7 +82,7 @@ class Upsample(nn.Module):
         if use_conv_transpose:
             raise NotImplementedError
         elif use_conv:
-            conv = Pseudo3DConv(self.channels, self.out_channels, 3, padding=1)
+            conv = SuperConvs(self.channels, self.out_channels, 3, padding=1)
 
         if name == "conv":
             self.conv = conv
@@ -184,7 +139,7 @@ class Downsample(nn.Module):
         self.name = name
 
         if use_conv:
-            conv = Pseudo3DConv(self.channels, self.out_channels, 3, stride=stride, padding=padding)
+            conv = SuperConvs(self.channels, self.out_channels, 3, stride=stride, padding=padding)
         else:
             raise NotImplementedError
 
@@ -241,7 +196,7 @@ class ResnetBlock(nn.Module):
             groups_out = groups
 
         self.norm1 = torch.nn.GroupNorm(num_groups=groups, num_channels=in_channels, eps=eps, affine=True)
-        self.conv1 = Pseudo3DConv(in_channels, out_channels, kernel_size=3, stride=1, padding=1)
+        self.conv1 = SuperConvs(in_channels, out_channels, kernel_size=3, stride=1, padding=1)
 
         if temb_channels is not None:
             if self.time_embedding_norm == "default":
@@ -257,7 +212,7 @@ class ResnetBlock(nn.Module):
 
         self.norm2 = torch.nn.GroupNorm(num_groups=groups_out, num_channels=out_channels, eps=eps, affine=True)
         self.dropout = torch.nn.Dropout(dropout)
-        self.conv2 = Pseudo3DConv(out_channels, out_channels, kernel_size=3, stride=1, padding=1)
+        self.conv2 = SuperConvs(out_channels, out_channels, kernel_size=3, stride=1, padding=1)
 
         if non_linearity == "swish":
             self.nonlinearity = lambda x: F.silu(x)
@@ -270,7 +225,7 @@ class ResnetBlock(nn.Module):
 
         self.conv_shortcut = None
         if self.use_in_shortcut:
-            self.conv_shortcut = Pseudo3DConv(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
+            self.conv_shortcut = SuperConvs(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
 
     def forward(self, 
                 input_tensor, 
