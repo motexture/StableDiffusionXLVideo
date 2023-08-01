@@ -58,6 +58,7 @@ def get_down_block(
         )
     raise ValueError(f"{down_block_type} does not exist.")
 
+
 def get_up_block(
     up_block_type,
     num_layers,
