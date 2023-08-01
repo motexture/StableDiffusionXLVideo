@@ -8,42 +8,36 @@ import torch.nn.functional as F
 from einops import rearrange
     
 class SuperConvs(nn.Module):
-    def __init__(
-        self,
-        dim,
-        dim_out,
-        kernel_size,
-        **kwargs
-    ):
+    def __init__(self, dim, dim_out, kernel_size, **kwargs):
         super().__init__()
 
         self.spatial_conv = nn.Conv2d(dim, dim_out, kernel_size, **kwargs)
-        self.temporal_conv = TemporalConvs(dim_out, 4) if dim_out >= 320 else None
+        self.temporal_conv = TemporalConvs(dim_out, 4, 0.1) if dim_out >= 320 else None
 
     def forward(self, hidden_states):
         b, c, f, h, w = hidden_states.shape
 
         hidden_states = rearrange(hidden_states, "b c f h w -> (b f) c h w")
         hidden_states = self.spatial_conv(hidden_states)
-        hidden_states = rearrange(hidden_states, '(b f) c h w -> b c f h w', b=b)
+        hidden_states = rearrange(hidden_states, "(b f) c h w -> b c f h w", b=b)
 
-        hidden_states = self.temporal_conv(hidden_states) if self.temporal_conv else hidden_states 
+        hidden_states = (
+            self.temporal_conv(hidden_states) if self.temporal_conv else hidden_states
+        )
 
         return hidden_states
-    
+
 class TemporalConvs(nn.Module):
-    def __init__(self, 
-                dim, 
-                num_layers=4
-                ):
+    def __init__(self, dim, num_layers=4, dropout=0.1):
         super().__init__()
-        
+
         self.conv_blocks = nn.ModuleList(
             [
                 nn.Sequential(
-                    nn.GroupNorm(dim // 32, dim), 
-                    nn.SiLU(), 
-                    nn.Conv3d(dim, dim, (3, 1, 1), padding=(1, 0, 0))
+                    nn.GroupNorm(dim // 32, dim),
+                    nn.SiLU(),
+                    nn.Dropout(dropout),
+                    nn.Conv3d(dim, dim, (3, 1, 1), padding=(1, 0, 0)),
                 )
                 for d in range(num_layers)
             ]
