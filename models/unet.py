@@ -8,7 +8,7 @@ import os
 from safetensors.torch import load_file
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Union
-from models.resnet import Pseudo3DConv
+from models.resnet import SuperConvs
 from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.utils import BaseOutput, logging
 from diffusers.utils import WEIGHTS_NAME
@@ -132,7 +132,7 @@ class StableDiffusionXLVideoUnet3D(ModelMixin, ConfigMixin):
                 f"Must provide the same number of `block_out_channels` as `down_block_types`. `block_out_channels`: {block_out_channels}. `down_block_types`: {down_block_types}."
             )
          
-        self.conv_in = Pseudo3DConv(in_channels, block_out_channels[0], kernel_size=3, padding=(1, 1))
+        self.conv_in = SuperConvs(in_channels, block_out_channels[0], kernel_size=3, padding=(1, 1))
 
         time_embed_dim = block_out_channels[0] * 4
         self.time_proj = Timesteps(block_out_channels[0], flip_sin_to_cos, freq_shift)
@@ -239,7 +239,7 @@ class StableDiffusionXLVideoUnet3D(ModelMixin, ConfigMixin):
         
         self.conv_norm_out = nn.GroupNorm(num_channels=block_out_channels[0], num_groups=norm_num_groups, eps=norm_eps)
         self.conv_act = nn.SiLU()
-        self.conv_out = Pseudo3DConv(block_out_channels[0], out_channels, kernel_size=3, padding=1)
+        self.conv_out = SuperConvs(block_out_channels[0], out_channels, kernel_size=3, padding=1)
 
     def set_attention_slice(self, slice_size):
         r"""
