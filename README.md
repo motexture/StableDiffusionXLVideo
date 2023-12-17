@@ -1,7 +1,7 @@
-# Stable Diffusion XL Video
+# StableDiffusionXLVideo
 ## Train a Video Diffusion Model Using Stable Diffusion XL Image Priors
 
-This project involves training a video diffusion model based on Stable Diffusion XL image priors. It is heavily inspired by the "Make-a-video" paper by Meta. For more details, please refer to this link: (https://arxiv.org/abs/2209.14792)
+This project involves training a video diffusion model based on Stable Diffusion XL image priors.
 
 ## Getting Started
 
